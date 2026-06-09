@@ -182,12 +182,21 @@ kbd {
 
 .text-box {
   background: var(--panel-solid); border: 1px solid var(--line); border-radius: var(--radius);
-  padding: 28px 30px; font-family: var(--mono); font-size: 1.5rem; line-height: 2.1;
-  max-height: 230px; overflow-y: auto; outline: none; letter-spacing: .5px;
-  box-shadow: var(--glow); scroll-behavior: smooth;
+  padding: 26px 30px; font-family: var(--mono); font-size: 1.5rem; line-height: 2.1;
+  height: 204px; overflow: hidden; outline: none; letter-spacing: .5px;
+  box-shadow: var(--glow); position: relative;
 }
+/* Innerer Container, der sanft nach oben gleitet, sodass die aktive Zeile mitläuft. */
+.text-scroller {
+  position: relative;
+  transition: transform .28s cubic-bezier(.22,.61,.36,1);
+  will-change: transform;
+  overflow-wrap: anywhere;            /* Sicherheitsnetz für extrem lange Wörter */
+}
+/* Ganze Wörter bleiben zusammen – Umbruch passiert nur an den Leerzeichen. */
+.word { display: inline-block; vertical-align: top; }
 .ch { color: var(--muted); position: relative; transition: color .08s; border-radius: 3px; }
-.ch-space { white-space: pre; }
+.ch-space { white-space: pre-wrap; }
 .ch-correct { color: var(--good); }
 .ch-wrong { color: #fff; background: var(--bad); border-radius: 3px; }
 .ch-caret::before {

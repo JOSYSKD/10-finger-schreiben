@@ -28,6 +28,8 @@ export class TypingEngine {
     this.finished = false;
     this._raf = null;
     this._spans = [];
+    this.scroller = null;
+    this._lineH = 0;
   }
 
   setText(text) {
@@ -41,17 +43,34 @@ export class TypingEngine {
   render() {
     this.textEl.innerHTML = '';
     this._spans = [];
-    const frag = document.createDocumentFragment();
+    // Innerer Scroller, der für das sanfte Mitlaufen per transform verschoben wird.
+    this.scroller = document.createElement('div');
+    this.scroller.className = 'text-scroller';
+    let word = null;                       // aktueller Wort-Wrapper
     for (let i = 0; i < this.target.length; i++) {
+      const c = this.target[i];
       const span = document.createElement('span');
       span.className = 'ch';
-      const c = this.target[i];
-      span.textContent = c === ' ' ? ' ' : c;
-      if (c === ' ') span.classList.add('ch-space');
-      frag.appendChild(span);
+      if (c === ' ') {
+        // Leerzeichen stehen zwischen den Wörtern -> nur hier darf umgebrochen werden.
+        span.classList.add('ch-space');
+        span.textContent = ' ';
+        this.scroller.appendChild(span);
+        word = null;
+      } else {
+        // Buchstaben werden zu einem Wort gebündelt, damit es nie mittendrin umbricht.
+        span.textContent = c;
+        if (!word) {
+          word = document.createElement('span');
+          word.className = 'word';
+          this.scroller.appendChild(word);
+        }
+        word.appendChild(span);
+      }
       this._spans.push(span);
     }
-    this.textEl.appendChild(frag);
+    this.textEl.appendChild(this.scroller);
+    this.scroller.style.transform = 'translateY(0)';
   }
 
   start() {
@@ -119,16 +138,26 @@ export class TypingEngine {
 
   updateCaret() {
     this._spans.forEach(s => s.classList.remove('ch-caret'));
-    if (this.pos < this._spans.length) {
-      const s = this._spans[this.pos];
-      s.classList.add('ch-caret');
-      // sanftes Scrollen, damit der Cursor sichtbar bleibt
-      const box = this.textEl.getBoundingClientRect();
-      const cr = s.getBoundingClientRect();
-      if (cr.top - box.top > box.height * 0.6) {
-        this.textEl.scrollTop += cr.top - box.top - box.height * 0.4;
-      }
+    const idx = Math.min(this.pos, this._spans.length - 1);
+    const s = this._spans[idx];
+    if (!s) return;
+    if (this.pos < this._spans.length) s.classList.add('ch-caret');
+    this._scrollToCaret(s);
+  }
+
+  // Lässt die Zeile mit dem Cursor sanft mitlaufen, statt den Container zu scrollen.
+  _scrollToCaret(span) {
+    if (!this.scroller) return;
+    // Zeilenhöhe dynamisch ermitteln (robust bei Theme-/Größenwechsel).
+    if (!this._lineH) {
+      this._lineH = parseFloat(getComputedStyle(this.textEl).lineHeight) || 50;
     }
+    const lh = this._lineH;
+    // offsetTop ist layout-basiert und damit unabhängig vom aktuellen transform.
+    const caretLine = Math.round(span.offsetTop / lh);
+    // Eine Zeile Kontext oberhalb der aktiven Zeile sichtbar lassen.
+    const offset = Math.max(0, (caretLine - 1) * lh);
+    this.scroller.style.transform = `translateY(${-offset}px)`;
   }
 
   emitNext() {
@@ -139,7 +168,6 @@ export class TypingEngine {
     const now = this.finished ? this.endTime : performance.now();
     const elapsedMs = this.startTime ? now - this.startTime : 0;
     const elapsed = elapsedMs / 1000;
-    const minutes = elapsedMs / 60000 || 1 / 60000;
     const correctChars = this.pos;
     const wpm = elapsedMs > 0 ? (correctChars / 5) / (elapsedMs / 60000) : 0;
     const accuracy = this.typed > 0 ? (this.typed - this.errors) / this.typed * 100 : 100;
