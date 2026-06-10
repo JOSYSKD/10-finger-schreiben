@@ -1,10 +1,10 @@
 // Service Worker – macht die App offline-fähig (App-in-Taskleiste ohne Internet)
-const CACHE = 'tt10-v2';
+const CACHE = 'tt10-v3';
 const ASSETS = [
   './', './index.html', './manifest.webmanifest',
   './css/style.css',
   './js/app.js', './js/data.js', './js/audio.js', './js/storage.js',
-  './js/engine.js', './js/game.js', './js/keyboard.js',
+  './js/engine.js', './js/game.js', './js/keyboard.js', './js/tmux.js',
   './assets/favicon.svg', './assets/icon-192.png', './assets/icon-512.png',
 ];
 self.addEventListener('install', e => {

@@ -14,6 +14,7 @@ const DEFAULT = {
   },
   lessons: {},            // { l1: {done:true, bestWpm, bestAcc, stars} }
   achievements: {},       // { first_run: true }
+  tmux: { bestScore: 0, lessonDone: false, mastered: {} }, // tmux-Shortcut-Modul
 };
 
 let data = load();
@@ -44,6 +45,7 @@ export const Store = {
   get data() { return data; },
   get settings() { return data.settings; },
   get stats() { return data.stats; },
+  get tmux() { return data.tmux; },
 
   save() {
     try { localStorage.setItem(KEY, JSON.stringify(data)); } catch {}
@@ -79,6 +81,22 @@ export const Store = {
   recordGameScore(score) {
     if (score > data.stats.bestGameScore) data.stats.bestGameScore = score;
     this.markActiveToday();
+    this.save();
+  },
+
+  // ---- tmux-Shortcut-Modul ----
+  recordTmuxScore(score) {
+    if (score > data.tmux.bestScore) data.tmux.bestScore = score;
+    this.markActiveToday();
+    this.save();
+  },
+  finishTmuxLesson() {
+    data.tmux.lessonDone = true;
+    this.markActiveToday();
+    this.save();
+  },
+  markTmuxMastered(id) {
+    data.tmux.mastered[id] = true;
     this.save();
   },
 

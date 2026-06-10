@@ -7,6 +7,8 @@ import { Store } from './storage.js';
 import { TypingEngine } from './engine.js';
 import { WordRain } from './game.js';
 import { VirtualKeyboard, buildFingerLegend, buildHands, highlightFinger } from './keyboard.js';
+import { mountTmuxLesson, mountTmuxArena, TMUX } from './tmux.js';
+const TMUX_COUNT = TMUX.steps.length;
 
 const app = document.getElementById('view');
 const $ = (sel, el = document) => el.querySelector(sel);
@@ -104,6 +106,35 @@ function viewHome() {
         ${tile('achievements','🏆','Erfolge','Sammle alle Auszeichnungen')}
         ${tile('settings','⚙️','Einstellungen','Design, Sound & Sprache')}
       </div>
+
+      <div class="special-zone">
+        <div class="special-head">
+          <span class="special-tag">⚡ NEU</span>
+          <h2>tmux-Shortcuts meistern</h2>
+          <p>Lerne die wichtigsten Terminal-Kürzel – und wende sie im Spiel an.</p>
+        </div>
+        <div class="special-grid">
+          <button class="special-btn learn" data-go="tmuxLesson">
+            <div class="sb-glow"></div>
+            <div class="sb-icon">📖</div>
+            <div class="sb-text">
+              <div class="sb-title">Lektion</div>
+              <div class="sb-desc">Alle ${TMUX_COUNT} Shortcuts Schritt für Schritt – mit echten Tasten</div>
+            </div>
+            <div class="sb-badge">${Store.tmux.lessonDone ? '✅ gemeistert' : 'starten →'}</div>
+          </button>
+          <button class="special-btn play" data-go="tmuxArena">
+            <div class="sb-glow"></div>
+            <div class="sb-icon">🖥️</div>
+            <div class="sb-text">
+              <div class="sb-title">tmux Command Arena</div>
+              <div class="sb-desc">Führ Aufträge live aus – das Terminal reagiert in Echtzeit</div>
+            </div>
+            <div class="sb-badge">🏆 ${Store.tmux.bestScore}</div>
+          </button>
+        </div>
+      </div>
+
       <footer class="foot">Mit ❤️ gebaut · Drücke <kbd>Esc</kbd> jederzeit fürs Menü</footer>
     </div>`;
   app.querySelectorAll('[data-go]').forEach(el =>
@@ -399,6 +430,22 @@ function viewGame() {
 }
 
 // ===========================================================================
+//  VIEW: tmux-Lektion  &  tmux Command Arena
+// ===========================================================================
+function viewTmuxLesson() {
+  app.innerHTML = `${topbar('📖 tmux-Lektion')}<div id="tmux-root"></div>`;
+  bindBack();
+  const cleanup = mountTmuxLesson($('#tmux-root'), { onExit: routes.home, confetti });
+  current.cleanup = cleanup;
+}
+function viewTmuxArena() {
+  app.innerHTML = `${topbar('🖥️ tmux Command Arena')}<div id="tmux-root"></div>`;
+  bindBack();
+  const cleanup = mountTmuxArena($('#tmux-root'), { onExit: routes.home, confetti });
+  current.cleanup = cleanup;
+}
+
+// ===========================================================================
 //  VIEW: Statistiken
 // ===========================================================================
 function viewStats() {
@@ -547,6 +594,8 @@ const routes = {
   lessons: () => go(viewLessons),
   test: () => go(viewTest),
   game: () => go(viewGame),
+  tmuxLesson: () => go(viewTmuxLesson),
+  tmuxArena: () => go(viewTmuxArena),
   stats: () => go(viewStats),
   achievements: () => go(viewAchievements),
   settings: () => go(viewSettings),
