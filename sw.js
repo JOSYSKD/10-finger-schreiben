@@ -1,5 +1,5 @@
 // Service Worker – macht die App offline-fähig (App-in-Taskleiste ohne Internet)
-const CACHE = 'tt10-v5';
+const CACHE = 'tt10-v6';
 const ASSETS = [
   './', './index.html', './manifest.webmanifest',
   './css/style.css',

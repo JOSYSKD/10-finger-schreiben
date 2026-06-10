@@ -45,20 +45,13 @@
 html, body { height: 100%; }
 body {
   font-family: var(--font);
-  background: var(--bg) url('../assets/bg.jpg') center / cover no-repeat fixed;
+  background: #000 url('../assets/bg.jpg') center / cover no-repeat fixed;
   color: var(--text);
   overflow-x: hidden;
   min-height: 100vh;
 }
-/* Farbige Glows + halbtransparenter Schleier, damit das Foto durchscheint,
-   Text & Kacheln aber lesbar bleiben. */
-#bg-gradient {
-  position: fixed; inset: 0; z-index: -1;
-  background:
-    radial-gradient(800px 500px at 15% 10%, color-mix(in srgb, var(--accent) 16%, transparent), transparent 60%),
-    radial-gradient(700px 500px at 85% 90%, color-mix(in srgb, var(--accent2) 14%, transparent), transparent 60%),
-    linear-gradient(160deg, color-mix(in srgb, var(--bg) 62%, transparent), color-mix(in srgb, var(--bg2) 70%, transparent));
-}
+/* Das Bild ist der einzige Hintergrund – keine Glows/Schleier darüber. */
+#bg-gradient { display: none; }
 
 #view { max-width: 1100px; margin: 0 auto; padding: 28px 20px 60px; min-height: 100vh; }
 .fade-in { animation: fade .4s ease; }
