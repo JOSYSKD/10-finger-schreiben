@@ -534,3 +534,226 @@ export function mountTmuxArena(root, { onExit, confetti }) {
     window.removeEventListener('keydown', reader.handle);
   };
 }
+
+// ===========================================================================
+//  SPIEL 2  –  „tmux Architect":  ein Ziel-Layout mit echten Splits nachbauen
+//  Genre: Puzzle/Aufbau (ganz anders als die Reaktions-Arena).
+// ===========================================================================
+export function mountTmuxArchitect(root, { onExit, confetti }) {
+  let level = 1, score = 0, moves = 0, par = 2;
+  let build = null, activeId = 0, target = null, startTime = 0, running = false, idSeq = 0;
+
+  const leaf = () => ({ t: 'leaf', id: ++idSeq, parent: null });
+  const serial = n => n.t === 'leaf' ? 'L' : n.dir + '[' + serial(n.a) + serial(n.b) + ']';
+  const leaves = (n, out = []) => { n.t === 'leaf' ? out.push(n) : (leaves(n.a, out), leaves(n.b, out)); return out; };
+  const findLeaf = id => leaves(build).find(l => l.id === id);
+
+  // ---- Ziel-Layout zufällig erzeugen (immer baubar) ----
+  function genTarget(splits) {
+    const r = { t: 'leaf' };
+    for (let i = 0; i < splits; i++) {
+      const ls = []; (function c(n) { n.t === 'leaf' ? ls.push(n) : (c(n.a), c(n.b)); })(r);
+      const L = ls[Math.floor(Math.random() * ls.length)];
+      L.t = 'split'; L.dir = Math.random() < 0.5 ? 'v' : 'h'; L.a = { t: 'leaf' }; L.b = { t: 'leaf' };
+    }
+    return r;
+  }
+
+  // ---- Operationen (entsprechen den echten tmux-Shortcuts) ----
+  function splitActive(dir) {
+    if (!running) return;
+    const L = findLeaf(activeId); if (!L) return;
+    const N = leaf();
+    const S = { t: 'split', dir, a: L, b: N, parent: L.parent };
+    if (L.parent) { if (L.parent.a === L) L.parent.a = S; else L.parent.b = S; } else build = S;
+    L.parent = S; N.parent = S;
+    activeId = N.id; moves++;
+    Sound.shoot();
+    afterMove();
+  }
+  function closeActive() {
+    if (!running) return;
+    const L = findLeaf(activeId); if (!L || !L.parent) { wrongBlink(); return; }
+    const P = L.parent, sib = P.a === L ? P.b : P.a;
+    sib.parent = P.parent;
+    if (P.parent) { if (P.parent.a === P) P.parent.a = sib; else P.parent.b = sib; } else build = sib;
+    activeId = leaves(sib)[0].id; moves++;
+    Sound.explode();
+    afterMove();
+  }
+  function navNext() {
+    if (!running) return;
+    const ls = leaves(build); const i = ls.findIndex(l => l.id === activeId);
+    activeId = ls[(i + 1) % ls.length].id; renderBuild(); Sound.key();
+  }
+  function rects(n, x, y, w, h, out) {
+    if (n.t === 'leaf') { out.push({ id: n.id, cx: x + w / 2, cy: y + h / 2 }); return; }
+    if (n.dir === 'v') { rects(n.a, x, y, w / 2, h, out); rects(n.b, x + w / 2, y, w / 2, h, out); }
+    else { rects(n.a, x, y, w, h / 2, out); rects(n.b, x, y + h / 2, w, h / 2, out); }
+  }
+  function navDir(d) {
+    if (!running) return;
+    const out = []; rects(build, 0, 0, 1, 1, out);
+    const cur = out.find(r => r.id === activeId); if (!cur) return;
+    let best = null, bd = 1e9;
+    for (const r of out) {
+      if (r.id === activeId) continue;
+      const dx = r.cx - cur.cx, dy = r.cy - cur.cy;
+      let ok = false, dist = 0;
+      if (d === 'ArrowLeft' && dx < -0.01) { ok = true; dist = -dx + Math.abs(dy) * 0.5; }
+      if (d === 'ArrowRight' && dx > 0.01) { ok = true; dist = dx + Math.abs(dy) * 0.5; }
+      if (d === 'ArrowUp' && dy < -0.01) { ok = true; dist = -dy + Math.abs(dx) * 0.5; }
+      if (d === 'ArrowDown' && dy > 0.01) { ok = true; dist = dy + Math.abs(dx) * 0.5; }
+      if (ok && dist < bd) { bd = dist; best = r; }
+    }
+    if (best) { activeId = best.id; renderBuild(); Sound.key(); }
+  }
+
+  function afterMove() {
+    renderBuild(); updateHud();
+    if (serial(build) === serial(target)) win();
+  }
+
+  // ---- Gewonnen: Punkte, nächstes Level ----
+  function win() {
+    running = false;
+    const perfect = moves <= par;
+    const timeBonus = Math.max(0, 30 - Math.floor((performance.now() - startTime) / 1000));
+    const pts = 100 + level * 25 + (perfect ? 60 : 0) + timeBonus;
+    score += pts;
+    Store.recordArchitect(score, level);
+    Sound.levelup();
+    const b = document.getElementById('arch-build'); if (b) b.classList.add('solved');
+    flashMsg(`✅ Level ${level} geschafft · +${pts}${perfect ? ' · ⭐ perfekt!' : ''}`);
+    if (perfect) confetti && confetti();
+    setTimeout(() => { level++; newLevel(); }, 1500);
+  }
+
+  function flashMsg(txt) {
+    const m = document.getElementById('arch-msg');
+    if (m) { m.textContent = txt; m.classList.remove('show'); void m.offsetWidth; m.classList.add('show'); }
+  }
+  function wrongBlink() {
+    const b = document.getElementById('arch-build');
+    if (b) { b.classList.remove('shake'); void b.offsetWidth; b.classList.add('shake'); }
+    Sound.error();
+  }
+
+  // ---- Rendern ----
+  function treeHTML(n, isTarget) {
+    if (n.t === 'leaf') {
+      const on = !isTarget && n.id === activeId;
+      return `<div class="ap-leaf${on ? ' on' : ''}${isTarget ? ' tgt' : ''}"><span class="ap-mini"></span></div>`;
+    }
+    return `<div class="ap-node ${n.dir}">${treeHTML(n.a, isTarget)}${treeHTML(n.b, isTarget)}</div>`;
+  }
+  function renderTarget() { const e = document.getElementById('arch-target'); if (e) e.innerHTML = treeHTML(target, true); }
+  function renderBuild() { const e = document.getElementById('arch-build'); if (e) { e.classList.remove('solved'); e.innerHTML = treeHTML(build, false); } }
+  function updateHud() {
+    set('ar-level', level); set('ar-score', score);
+    set('ar-moves', moves + ' / ' + par);
+    set('ar-panes', leaves(build).length + ' / ' + (par + 1));
+  }
+  function set(id, v) { const e = document.getElementById(id); if (e) e.textContent = v; }
+
+  // ---- Level vorbereiten ----
+  function newLevel() {
+    par = Math.min(level + 1, 6);
+    target = genTarget(par);
+    idSeq = 0; build = leaf(); activeId = build.id; moves = 0;
+    startTime = performance.now(); running = true;
+    renderTarget(); renderBuild(); updateHud();
+  }
+
+  // ---- Views ----
+  function viewStart() {
+    root.innerHTML = `
+      <div class="arena-wrap">
+        <div class="arena-overlay">
+          <h2>🏗️ tmux Architect</h2>
+          <p>Oben siehst du ein <b>Ziel-Layout</b>. Bau es darunter mit den echten Shortcuts nach:<br>
+          <kbd>Strg</kbd>+<kbd>b</kbd> dann …
+          <span class="ap-legend">
+            <span><kbd>%</kbd> vertikal</span><span><kbd>"</kbd> horizontal</span>
+            <span><kbd>o</kbd>/<kbd>→</kbd> Pane wählen</span><span><kbd>x</kbd> schließen</span>
+          </span><br>
+          Du splittest immer das <b>hervorgehobene</b> Pane. Wenig Züge = ⭐ perfekt!</p>
+          <button class="btn-primary big" id="ar-start">▶ Los geht's</button>
+          <p class="muted small">Rekord: ${Store.tmux.bestArchitect} Punkte · bis Level ${Store.tmux.bestArchitectLevel}</p>
+        </div>
+      </div>`;
+    document.getElementById('ar-start').addEventListener('click', start);
+  }
+
+  function viewGame() {
+    root.innerHTML = `
+      <div class="arch-wrap">
+        <div class="arena-hud">
+          <div class="ghud"><b id="ar-level">1</b><span>Level</span></div>
+          <div class="ghud"><b id="ar-score">0</b><span>Punkte</span></div>
+          <div class="ghud"><b id="ar-moves">0 / 2</b><span>Züge / Par</span></div>
+          <div class="ghud"><b id="ar-panes">1 / 3</b><span>Panes</span></div>
+        </div>
+
+        <div class="mt-prefix arch-prefix" id="mt-prefix"><span class="lamp"></span>PREFIX</div>
+
+        <div class="arch-cols">
+          <div class="arch-panel">
+            <div class="arch-h">🎯 Ziel</div>
+            <div class="ap-frame target" id="arch-target"></div>
+          </div>
+          <div class="arch-panel">
+            <div class="arch-h">🛠️ Dein Layout</div>
+            <div class="ap-frame" id="arch-build"></div>
+          </div>
+        </div>
+
+        <div class="arch-msg" id="arch-msg"></div>
+        <div class="arch-bar">
+          <button class="btn-ghost" id="ar-reset">⟲ Layout leeren</button>
+          <span class="hint">Tipp die echten Tasten · <kbd>Esc</kbd> beendet</span>
+        </div>
+      </div>`;
+    document.getElementById('ar-reset').addEventListener('click', () => {
+      if (!running) return;
+      idSeq = 0; build = leaf(); activeId = build.id; renderBuild(); updateHud(); Sound.key();
+    });
+  }
+
+  function start() {
+    score = 0; level = 1;
+    viewGame();
+    newLevel();
+  }
+
+  // ---- Prefix-Eingabe ----
+  function setPrefix(on) { const p = document.getElementById('mt-prefix'); if (p) p.classList.toggle('armed', on); }
+  const reader = makeChordReader({
+    onArm: () => { setPrefix(true); Sound.key(); },
+    onChord: (e) => {
+      setPrefix(false);
+      if (!running) return;
+      const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+      if (e.key === '%') splitActive('v');
+      else if (e.key === '"') splitActive('h');
+      else if (k === 'o') navNext();
+      else if (k === 'x') closeActive();
+      else if (e.key.startsWith('Arrow')) navDir(e.key);
+      else wrongBlink();
+    },
+    onStray: () => {
+      if (!running) return;
+      const p = document.getElementById('mt-prefix');
+      if (p) { p.classList.remove('blink'); void p.offsetWidth; p.classList.add('blink'); }
+    },
+  });
+
+  window.addEventListener('keydown', reader.handle);
+  viewStart();
+
+  return () => {
+    running = false;
+    if (score > 0) Store.recordArchitect(score, level);
+    window.removeEventListener('keydown', reader.handle);
+  };
+}

@@ -14,7 +14,7 @@ const DEFAULT = {
   },
   lessons: {},            // { l1: {done:true, bestWpm, bestAcc, stars} }
   achievements: {},       // { first_run: true }
-  tmux: { bestScore: 0, lessonDone: false, mastered: {} }, // tmux-Shortcut-Modul
+  tmux: { bestScore: 0, lessonDone: false, mastered: {}, bestArchitect: 0, bestArchitectLevel: 0 }, // tmux-Shortcut-Modul
 };
 
 let data = load();
@@ -97,6 +97,12 @@ export const Store = {
   },
   markTmuxMastered(id) {
     data.tmux.mastered[id] = true;
+    this.save();
+  },
+  recordArchitect(score, level) {
+    if (score > data.tmux.bestArchitect) data.tmux.bestArchitect = score;
+    if (level > data.tmux.bestArchitectLevel) data.tmux.bestArchitectLevel = level;
+    this.markActiveToday();
     this.save();
   },
 

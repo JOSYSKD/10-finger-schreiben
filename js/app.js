@@ -7,7 +7,7 @@ import { Store } from './storage.js';
 import { TypingEngine } from './engine.js';
 import { WordRain } from './game.js';
 import { VirtualKeyboard, buildFingerLegend, buildHands, highlightFinger } from './keyboard.js';
-import { mountTmuxLesson, mountTmuxArena, TMUX } from './tmux.js';
+import { mountTmuxLesson, mountTmuxArena, mountTmuxArchitect, TMUX } from './tmux.js';
 const TMUX_COUNT = TMUX.steps.length;
 
 const app = document.getElementById('view');
@@ -131,6 +131,15 @@ function viewHome() {
               <div class="sb-desc">Führ Aufträge live aus – das Terminal reagiert in Echtzeit</div>
             </div>
             <div class="sb-badge">🏆 ${Store.tmux.bestScore}</div>
+          </button>
+          <button class="special-btn build" data-go="tmuxArchitect">
+            <div class="sb-glow"></div>
+            <div class="sb-icon">🏗️</div>
+            <div class="sb-text">
+              <div class="sb-title">tmux Architect</div>
+              <div class="sb-desc">Puzzle: bau vorgegebene Split-Layouts mit echten Shortcuts nach</div>
+            </div>
+            <div class="sb-badge">🏆 ${Store.tmux.bestArchitect}</div>
           </button>
         </div>
       </div>
@@ -444,6 +453,12 @@ function viewTmuxArena() {
   const cleanup = mountTmuxArena($('#tmux-root'), { onExit: routes.home, confetti });
   current.cleanup = cleanup;
 }
+function viewTmuxArchitect() {
+  app.innerHTML = `${topbar('🏗️ tmux Architect')}<div id="tmux-root"></div>`;
+  bindBack();
+  const cleanup = mountTmuxArchitect($('#tmux-root'), { onExit: routes.home, confetti });
+  current.cleanup = cleanup;
+}
 
 // ===========================================================================
 //  VIEW: Statistiken
@@ -596,6 +611,7 @@ const routes = {
   game: () => go(viewGame),
   tmuxLesson: () => go(viewTmuxLesson),
   tmuxArena: () => go(viewTmuxArena),
+  tmuxArchitect: () => go(viewTmuxArchitect),
   stats: () => go(viewStats),
   achievements: () => go(viewAchievements),
   settings: () => go(viewSettings),

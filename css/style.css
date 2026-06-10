@@ -292,6 +292,53 @@ kbd {
 .arena-overlay p { color: var(--muted); max-width: 460px; line-height: 1.6; }
 .arena-overlay .small { font-size: .85rem; }
 
+/* ---------- tmux Architect (Layout-Puzzle) ---------- */
+.special-btn.build { border-color: color-mix(in srgb, var(--good) 55%, var(--line)); }
+.arch-wrap { max-width: 940px; margin: 0 auto; }
+.arch-prefix { margin: 0 auto 12px; display: inline-flex; }
+.arch-wrap .arena-hud { margin-bottom: 12px; }
+.arch-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.arch-panel {
+  background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 14px; backdrop-filter: blur(8px);
+}
+.arch-h { font-weight: 700; margin-bottom: 10px; font-size: 1.05rem; }
+.ap-frame {
+  aspect-ratio: 16 / 10; width: 100%; border-radius: 10px; padding: 6px;
+  background: linear-gradient(180deg, #0a0e18, #0d1322); border: 1px solid var(--line);
+  display: flex; transition: box-shadow .2s;
+}
+.ap-frame.target { opacity: .96; }
+.ap-frame.solved { box-shadow: 0 0 30px color-mix(in srgb, var(--good) 55%, transparent); border-color: var(--good); }
+.ap-node { display: flex; gap: 5px; flex: 1; min-width: 0; min-height: 0; }
+.ap-node.v { flex-direction: row; }
+.ap-node.h { flex-direction: column; }
+.ap-node > * { flex: 1; min-width: 0; min-height: 0; }
+.ap-leaf {
+  border-radius: 6px; display: grid; place-items: center;
+  background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.12);
+  transition: all .15s;
+}
+.ap-leaf.tgt { background: color-mix(in srgb, var(--accent2) 16%, rgba(255,255,255,.03)); border-color: color-mix(in srgb, var(--accent2) 40%, var(--line)); }
+.ap-leaf.on {
+  background: color-mix(in srgb, var(--accent) 24%, rgba(255,255,255,.04));
+  border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent), 0 0 16px color-mix(in srgb,var(--accent) 40%,transparent);
+}
+.ap-mini { width: 60%; height: 4px; border-radius: 2px; background: color-mix(in srgb, var(--muted) 50%, transparent); }
+.ap-leaf.on .ap-mini { background: var(--accent); }
+.ap-leaf.tgt .ap-mini { background: color-mix(in srgb, var(--accent2) 70%, transparent); }
+.arch-msg { text-align: center; min-height: 28px; margin: 14px 0 4px; font-weight: 700; color: var(--good);
+  opacity: 0; transform: translateY(6px); transition: all .3s; font-size: 1.1rem; }
+.arch-msg.show { opacity: 1; transform: none; animation: pop .4s ease; }
+.arch-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 4px; }
+.arch-bar .hint { margin: 0; }
+.ap-legend { display: inline-flex; flex-wrap: wrap; gap: 6px 14px; justify-content: center; margin: 8px 0; }
+.ap-legend span { white-space: nowrap; color: var(--muted); font-size: .9rem; }
+
+@media (max-width: 640px) {
+  .arch-cols { grid-template-columns: 1fr; }
+}
+
 /* ---------- Topbar ---------- */
 .topbar { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; }
 .topbar-title { font-size: 1.5rem; font-weight: 700; }
