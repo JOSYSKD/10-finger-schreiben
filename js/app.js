@@ -7,8 +7,7 @@ import { Store } from './storage.js';
 import { TypingEngine } from './engine.js';
 import { WordRain } from './game.js';
 import { VirtualKeyboard, buildFingerLegend, buildHands, highlightFinger } from './keyboard.js';
-import { mountTmuxLesson, mountTmuxArena, mountTmuxArchitect, TMUX } from './tmux.js';
-const TMUX_COUNT = TMUX.steps.length;
+import { mountTmuxLesson, mountTmuxArena, mountTmuxArchitect } from './tmux.js';
 
 const app = document.getElementById('view');
 const $ = (sel, el = document) => el.querySelector(sel);
@@ -102,46 +101,12 @@ function viewHome() {
         ${tile('lessons','📚','Lektionen','Schritt für Schritt vom Anfänger zum Profi')}
         ${tile('test','⏱️','Schreibtest','Wie schnell & genau bist du wirklich?')}
         ${tile('game','👾','Wortregen','Arcade-Spiel: tippe Wörter weg, bevor sie fallen')}
+        ${tile('tmuxLesson','📖','tmux Lektion','Alle wichtigen Terminal-Shortcuts Schritt für Schritt lernen')}
+        ${tile('tmuxArena','🖥️','tmux Command Arena','Aufträge live ausführen – das Terminal reagiert in Echtzeit')}
+        ${tile('tmuxArchitect','🏗️','tmux Architect','Puzzle: vorgegebene Split-Layouts mit echten Shortcuts nachbauen')}
         ${tile('stats','📊','Statistiken','Verlauf, Bestwerte & Fehler-Heatmap')}
         ${tile('achievements','🏆','Erfolge','Sammle alle Auszeichnungen')}
         ${tile('settings','⚙️','Einstellungen','Design, Sound & Sprache')}
-      </div>
-
-      <div class="special-zone">
-        <div class="special-head">
-          <span class="special-tag">⚡ NEU</span>
-          <h2>tmux-Shortcuts meistern</h2>
-          <p>Lerne die wichtigsten Terminal-Kürzel – und wende sie im Spiel an.</p>
-        </div>
-        <div class="special-grid">
-          <button class="special-btn learn" data-go="tmuxLesson">
-            <div class="sb-glow"></div>
-            <div class="sb-icon">📖</div>
-            <div class="sb-text">
-              <div class="sb-title">Lektion</div>
-              <div class="sb-desc">Alle ${TMUX_COUNT} Shortcuts Schritt für Schritt – mit echten Tasten</div>
-            </div>
-            <div class="sb-badge">${Store.tmux.lessonDone ? '✅ gemeistert' : 'starten →'}</div>
-          </button>
-          <button class="special-btn play" data-go="tmuxArena">
-            <div class="sb-glow"></div>
-            <div class="sb-icon">🖥️</div>
-            <div class="sb-text">
-              <div class="sb-title">tmux Command Arena</div>
-              <div class="sb-desc">Führ Aufträge live aus – das Terminal reagiert in Echtzeit</div>
-            </div>
-            <div class="sb-badge">🏆 ${Store.tmux.bestScore}</div>
-          </button>
-          <button class="special-btn build" data-go="tmuxArchitect">
-            <div class="sb-glow"></div>
-            <div class="sb-icon">🏗️</div>
-            <div class="sb-text">
-              <div class="sb-title">tmux Architect</div>
-              <div class="sb-desc">Puzzle: bau vorgegebene Split-Layouts mit echten Shortcuts nach</div>
-            </div>
-            <div class="sb-badge">🏆 ${Store.tmux.bestArchitect}</div>
-          </button>
-        </div>
       </div>
 
       <footer class="foot">Mit ❤️ gebaut · Drücke <kbd>Esc</kbd> jederzeit fürs Menü</footer>
